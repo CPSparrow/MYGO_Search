@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>图片搜索</title>
+    <style>
+        .container {
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+        }
+
+        .search-box {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        #query {
+            flex: 1;
+            padding: 8px;
+            font-size: 16px;
+        }
+
+        button {
+            padding: 8px 16px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+
+        .results {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+        }
+
+        .image-item {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: center;
+        }
+
+        .image-item img {
+            max-width: 100%;
+            height: auto;
+            margin-bottom: 10px;
+        }
+
+        .copy-btn {
+            background-color: #008CBA;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="search-box">
+            <input type="text" id="query" placeholder="输入搜索内容...">
+            <button onclick="handleSearch()">确认</button>
+        </div>
+        <div id="results" class="results"></div>
+    </div>
+
+    <script>
+        async function handleSearch() {
+            const query = document.getElementById('query').value;
+            const resultsContainer = document.getElementById('results');
+            resultsContainer.innerHTML = '加载中...';
+
+            try {
+                const response = await fetch('http://localhost:5000/search', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ query: query })
+                });
+
+                const data = await response.json();
+                displayResults(data.images);
+            } catch (error) {
+                resultsContainer.innerHTML = error;
+            }
+        }
+
+        function displayResults(images) {
+            const container = document.getElementById('results');
+            container.innerHTML = '';
+
+            images.forEach(imagePath => {
+                const item = document.createElement('div');
+                item.className = 'image-item';
+                // path:jpg_01\012.jpg
+                let desc=`出处：第${imagePath.slice(4,6)}集-${imagePath.slice(7,10)}`;
+
+                item.innerHTML = `
+                    <img src="${imagePath}" alt="搜索结果">
+                    <div>${desc}</div>
+                    <button style="display: none;" class="copy-btn" onclick="copyToClipboard('${imagePath}')">复制路径</button>
+                `;
+
+                container.appendChild(item);
+            });
+        }
+
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text)
+                .then(() => alert('已复制到剪贴板'))
+                .catch(err => console.error('复制失败:', err));
+        }
+    </script>
+</body>
+</html>
